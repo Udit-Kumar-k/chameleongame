@@ -30,6 +30,11 @@ function startNameEntry() {
         alert("Please enter a valid number of imposters (at least 1, and less than the total players).");
         return;
     }
+    // Prevent imposters being equal to or more than half of players
+    if (imp >= Math.floor(num / 2)) {
+        alert("Number of imposters cannot be equal to or greater than half the number of players.");
+        return;
+    }
 
     showImposterWhenKicked = document.getElementById("showImposter").checked;
 
@@ -271,36 +276,35 @@ function revealWord(button, name) {
       let votedOut = null;
       if (playersWithMaxVotes.length === 0 || skipVotes >= maxVotes) {
         result = "No one was kicked out.";
-        // Image: Safe image (No one was kicked out)
-        document.getElementById("endImage").src = "PATH_TO_SAFE_IMAGE"; // Display line: No one was kicked out.
+        // Show IMPOSTER_NOT_KICKED_IMAGE in this case
+        document.getElementById("endImage").src = "PATH_TO_IMPOSTER_NOT_KICKED_IMAGE";
         document.getElementById("endImage").classList.remove("hidden");
       } else if (playersWithMaxVotes.length > 1) {
         result = "Voting tied. No one was kicked out.";
-        // Image: Tie image (Voting tied)
-        document.getElementById("endImage").src = "PATH_TO_TIE_IMAGE"; // Display line: Voting tied. No one was kicked out.
+        // Show IMPOSTER_NOT_KICKED_IMAGE in this case
+        document.getElementById("endImage").src = "PATH_TO_IMPOSTER_NOT_KICKED_IMAGE";
         document.getElementById("endImage").classList.remove("hidden");
       } else {
         votedOut = playersWithMaxVotes[0];
         result = `${votedOut} was kicked out.`;
-        if (showImposterWhenKicked) {
-            if (imposters.has(votedOut)) {
+        if (imposters.has(votedOut)) {
+            if (showImposterWhenKicked) {
                 result += " They were an imposter.";
-                imposters.delete(votedOut);
-                // Image: Imposter caught image
-                document.getElementById("endImage").src = "PATH_TO_IMPOSTER_CAUGHT_IMAGE"; // Display line: [Name] was kicked out. They were an imposter.
+                // Show IMPOSTER_KICKED_IMAGE when imposter is kicked and box is ticked
+                document.getElementById("endImage").src = "PATH_TO_IMPOSTER_KICKED_IMAGE";
                 document.getElementById("endImage").classList.remove("hidden");
             } else {
-                result += " They were not an imposter.";
-                // Image: Wrong guess image
-                document.getElementById("endImage").src = "PATH_TO_WRONG_GUESS_IMAGE"; // Display line: [Name] was kicked out. They were not an imposter.
+                // Show IMPOSTER_NOT_KICKED_IMAGE when imposter is kicked but box is NOT ticked
+                document.getElementById("endImage").src = "PATH_TO_IMPOSTER_NOT_KICKED_IMAGE";
                 document.getElementById("endImage").classList.remove("hidden");
             }
+            imposters.delete(votedOut);
         } else {
-            if (imposters.has(votedOut)) {
-                imposters.delete(votedOut);
+            if (showImposterWhenKicked) {
+                result += " They were not an imposter.";
             }
-            // Image: Neutral image (role not revealed)
-            document.getElementById("endImage").src = "PATH_TO_NEUTRAL_IMAGE"; // Display line: [Name] was kicked out.
+            // Show IMPOSTER_NOT_KICKED_IMAGE when a non-imposter is kicked out
+            document.getElementById("endImage").src = "PATH_TO_IMPOSTER_NOT_KICKED_IMAGE";
             document.getElementById("endImage").classList.remove("hidden");
         }
         players = players.filter(p => p !== votedOut);
@@ -321,19 +325,19 @@ function revealWord(button, name) {
       const endImage = document.getElementById("endImage");
       // Civilians win if all imposters are caught
       if (imposters.size === 0) {
-        document.getElementById("resultText").textContent += "\nCivilians win!";
+        document.getElementById("resultText").textContent += "\nCivilians win! All imposters have been caught.";
         nextRoundButton.classList.add("hidden");
         playAgainButton.classList.remove("hidden");
-        // Image: Winner image (Civilians win!)
-        endImage.src = "PATH_TO_WINNER_IMAGE"; // Display line: Civilians win!
+        // Show civilians win image
+        endImage.src = "PATH_TO_CIVILIANS_WIN_IMAGE";
         endImage.classList.remove("hidden");
         return true;
       }
       // Imposters win if they outnumber or equal the civilians
       if (imposters.size >= (players.length - imposters.size)) {
-        document.getElementById("resultText").textContent += "\nImposters win!";
-        // Image: Loser image (Imposters win!)
-        endImage.src = "PATH_TO_LOSER_IMAGE"; // Display line: Imposters win!
+        document.getElementById("resultText").textContent += "\nImposters win! Civilians are equal or outnumbered to the imposters.";
+        // Show IMPOSTERS_WIN_IMAGE when imposters win (civilians lose)
+        endImage.src = "PATH_TO_IMPOSTERS_WIN_IMAGE";
         endImage.classList.remove("hidden");
         nextRoundButton.classList.add("hidden");
         playAgainButton.classList.remove("hidden");
