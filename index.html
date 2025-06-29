@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chameleon Game</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
+  <script src="words.js"></script>
 </head>
 <body>
   <div class="section" id="setup">
@@ -13,7 +14,9 @@
     <label>Number of imposters: <input type="number" id="numImposters" min="1"></label>
     <label><input type="checkbox" id="randomWord"> Generate random keyword</label>
     <label><input type="checkbox" id="showImposter"> Show imposter if kicked out</label>
-    <label>Keyword (optional if random): <input type="text" id="keywordInput"></label>
+    <label>Custom Keyword(s) (comma-seperated)
+      <input type="text" id="keywordInput" placeholder="e.g., Apple, Banana, Orange">
+    </label>
     <button onclick="startNameEntry()">Next</button>
   </div>
 
@@ -25,7 +28,12 @@
   <div class="section hidden" id="revealPhase">
     <h3>Tap your name to get your word</h3>
     <div id="playerButtons"></div>
+    <div id="wordMessage" class="hidden"></div>
   </div>
+
+  <div id="discussionPhase" class="hidden">
+    <p id="discussionAnnouncement"></p>
+    <button onclick="startVoting()">Start Voting</button> </div>
 
   <div class="section hidden" id="gameStart">
     <p id="starterText"></p>

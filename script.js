@@ -1,133 +1,207 @@
-const keywords = ["Ocean", "Tiger", "Banana", "Doctor", "Rocket", "Library", "Mountain", "Computer", "Pizza", "Guitar", "Astronaut", "Elephant", "Book"];
-    let players = []; // List of active player names
-    let imposters = new Set(); // Set of imposter names
-    let keyword = ""; // The secret keyword for civilians
-    let revealed = {}; // Tracks which players have revealed their word
-    let votes = {}; // Stores votes for the current round
-    let round = 1; // Current round number
-    let showImposterWhenKicked = false; // Option to reveal imposter role
+let players = []; // List of active player names
+let imposters = new Set(); // Set of imposter names
+let keyword = ""; // The secret keyword for civilians (e.g., "Word (Category)")
+let revealed = {}; // Tracks which players have revealed their word { "PlayerName": { role: "Civilian", word: "Word (Category)" } }
+let votes = {}; // Stores votes for the current round
+let round = 1; // Current round number
+let showImposterWhenKicked = false; // Option to reveal imposter role
+let publicCategory = ''; // Global variable to store the category for public display
 
-    // Helper to shuffle an array (Fisher-Yates)
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
+// Helper to shuffle an array (Fisher-Yates)
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
     }
+    return arr;
+}
 
-    // --- Game Setup Phase ---
-    function startNameEntry() {
-      const num = parseInt(document.getElementById("numPlayers").value);
-      const imp = parseInt(document.getElementById("numImposters").value);
+// --- Game Setup Phase ---
+function startNameEntry() {
+    const num = parseInt(document.getElementById("numPlayers").value);
+    const imp = parseInt(document.getElementById("numImposters").value);
 
-      // Validate number of players and imposters
-      if (isNaN(num) || num < 3 || num > 13) {
+    // Validate number of players and imposters
+    if (isNaN(num) || num < 3 || num > 13) {
         alert("Please enter a number of players between 3 and 13.");
         return;
-      }
-      if (isNaN(imp) || imp < 1 || imp >= num) {
+    }
+    if (isNaN(imp) || imp < 1 || imp >= num) {
         alert("Please enter a valid number of imposters (at least 1, and less than the total players).");
         return;
-      }
+    }
 
-      showImposterWhenKicked = document.getElementById("showImposter").checked;
+    showImposterWhenKicked = document.getElementById("showImposter").checked;
 
-      // Handle keyword generation/input
-      if (document.getElementById("randomWord").checked) {
-        keyword = keywords[Math.floor(Math.random() * keywords.length)];
+    // --- Start: Keyword generation/input logic (already present, but needs to determine publicCategory) ---
+    let tempSelectedKeyword = ""; // Use a temporary variable for keyword determination
+    publicCategory = ''; // Reset public category for each game
+
+    const randomWordChecked = document.getElementById('randomWord').checked;
+    const keywordInputValue = document.getElementById('keywordInput').value.trim();
+
+    if (randomWordChecked) {
+        tempSelectedKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+        // Extract category for public display when a random word is picked
+        const lastParenIndex = tempSelectedKeyword.lastIndexOf('(');
+        const lastCloseParenIndex = tempSelectedKeyword.lastIndexOf(')');
+        if (lastParenIndex !== -1 && lastCloseParenIndex !== -1 && lastCloseParenIndex > lastParenIndex) {
+            publicCategory = tempSelectedKeyword.substring(lastParenIndex + 1, lastCloseParenIndex);
+        }
         document.getElementById("keywordInput").value = "[Randomly Generated]"; // Display that it's random
         document.getElementById("keywordInput").disabled = true; // Disable input if random
-      } else {
-        keyword = document.getElementById("keywordInput").value.trim();
-        if (!keyword) {
-          alert("Please enter a keyword or choose to generate a random one.");
-          return;
+    } else if (keywordInputValue) {
+        // If "Generate random keyword" is NOT checked, and a custom input is provided.
+        const customWords = keywordInputValue.split(',')
+                                            .map(word => word.trim())
+                                            .filter(word => word.length > 0);
+
+        if (customWords.length === 0) {
+            alert("No valid custom keyword(s) entered. Picking a random word from the general list.");
+            tempSelectedKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+            // Extract category for fallback random word
+            const lastParenIndex = tempSelectedKeyword.lastIndexOf('(');
+            const lastCloseParenIndex = tempSelectedKeyword.lastIndexOf(')');
+            if (lastParenIndex !== -1 && lastCloseParenIndex !== -1 && lastCloseParenIndex > lastParenIndex) {
+                publicCategory = tempSelectedKeyword.substring(lastParenIndex + 1, lastCloseParenIndex);
+            }
+        } else if (customWords.length === 1) {
+            tempSelectedKeyword = customWords[0];
+        } else {
+            tempSelectedKeyword = customWords[Math.floor(Math.random() * customWords.length)];
         }
+        // For custom keywords, publicCategory remains empty as per your requirement.
         document.getElementById("keywordInput").disabled = false; // Ensure input is enabled if not random
-      }
-
-      // Generate player name input fields
-      const nameInputsDiv = document.getElementById("nameInputs");
-      nameInputsDiv.innerHTML = "";
-      for (let i = 0; i < num; i++) {
-        nameInputsDiv.innerHTML += `<label>Player ${i + 1} Name: <input type='text' id='player${i}'></label>`;
-      }
-
-      // Transition to name entry
-      document.getElementById("setup").classList.add("hidden");
-      document.getElementById("nameEntry").classList.remove("hidden");
+    } else {
+        alert("Please enter a keyword or choose to generate a random one.");
+        return; // No keyword source, stop
     }
 
-    // --- Game Start & Role Assignment Phase ---
-    function startGame() {
-      players = []; // Clear previous players
-      revealed = {}; // Reset revealed status
-      votes = {}; // Reset votes
-      round = 1; // Reset round counter
-      document.getElementById("roundCounter").textContent = round; // Update display
+    keyword = tempSelectedKeyword; // Assign the determined keyword to the global 'keyword' variable
+    // --- End: Keyword generation/input logic ---
 
-      const num = parseInt(document.getElementById("numPlayers").value);
-      for (let i = 0; i < num; i++) {
+    // Generate player name input fields
+    const nameInputsDiv = document.getElementById("nameInputs");
+    nameInputsDiv.innerHTML = "";
+    for (let i = 0; i < num; i++) {
+        nameInputsDiv.innerHTML += `<label>Player ${i + 1} Name: <input type='text' id='player${i}'></label>`;
+    }
+
+    // Transition to name entry
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("nameEntry").classList.remove("hidden");
+    // Hide all other sections to prevent overlap
+    document.getElementById("revealPhase").classList.add("hidden");
+    document.getElementById("gameStart").classList.add("hidden");
+    document.getElementById("votingPhase").classList.add("hidden");
+    document.getElementById("results").classList.add("hidden");
+    document.getElementById("discussionPhase").classList.add("hidden");
+}
+
+// --- Game Start & Role Assignment Phase ---
+
+function startGame() {
+    players = [];
+    revealed = {};
+    votes = {};
+    round = 1;
+    document.getElementById("roundCounter").textContent = round;
+    const num = parseInt(document.getElementById("numPlayers").value);
+    for (let i = 0; i < num; i++) {
         let name = document.getElementById(`player${i}`).value.trim();
         if (!name) {
-          alert(`Please enter a name for Player ${i + 1}.`);
-          return;
+            alert(`Please enter a name for Player ${i + 1}.`);
+            return;
         }
         players.push(name);
-      }
-
-      players = shuffle(players); // Shuffle players before assigning roles
-
-      // Assign imposters
-      imposters = new Set();
-      const numImposters = parseInt(document.getElementById("numImposters").value);
-      while (imposters.size < numImposters) {
-        // Ensure the randomly selected player is not already an imposter
-        const potentialImposter = players[Math.floor(Math.random() * players.length)];
-        imposters.add(potentialImposter);
-      }
-
-      renderRevealButtons();
-      document.getElementById("nameEntry").classList.add("hidden");
-      document.getElementById("revealPhase").classList.remove("hidden");
     }
-
-    // Renders buttons for players to reveal their words
-    function renderRevealButtons() {
-      const btnDiv = document.getElementById("playerButtons");
-      btnDiv.innerHTML = "";
-      players.forEach(name => {
-        const btn = document.createElement("button");
-        btn.textContent = name;
-        btn.className = "player-button";
-        btn.onclick = () => revealWord(btn, name);
-        btnDiv.appendChild(btn);
-      });
+    players = shuffle(players);
+    const numImposters = parseInt(document.getElementById("numImposters").value);
+    if (isNaN(numImposters) || numImposters <= 0 || numImposters >= players.length) {
+        alert("Number of imposters must be positive and less than the total number of players.");
+        return;
     }
-
-    // Shows the word to a player (Imposter or Keyword)
-    function revealWord(button, name) {
-      if (revealed[name]) return; // Prevent revealing multiple times
-
-      revealed[name] = true;
-      button.classList.add("clicked"); // Visually indicate button has been clicked
-
-      const messageDiv = document.getElementById("wordMessage");
-      messageDiv.textContent = imposters.has(name) ? "You are the Imposter!" : `Keyword: ${keyword}`;
-      messageDiv.classList.remove("hidden");
-
-      setTimeout(() => {
-        messageDiv.classList.add("hidden"); // Hide the message after 5 seconds
-        // Check if all players have revealed their word
-        if (Object.keys(revealed).length === players.length) {
-          document.getElementById("revealPhase").classList.add("hidden");
-          document.getElementById("gameStart").classList.remove("hidden");
-          const starter = players[Math.floor(Math.random() * players.length)];
-          document.getElementById("starterText").textContent = `${starter} starts the discussion!`;
+    imposters = new Set();
+    const imposterIndices = shuffle(Array.from({ length: players.length }, (_, i) => i)).slice(0, numImposters);
+    imposterIndices.forEach(index => imposters.add(players[index]));
+    players.forEach(playerName => {
+        let displayWordForPlayer = keyword;
+        let playerRole = imposters.has(playerName) ? 'Imposter' : 'Civilian';
+        if (playerRole === 'Imposter') {
+            displayWordForPlayer = 'You are the Imposter!';
         }
-      }, 5000);
+        revealed[playerName] = {
+            role: playerRole,
+            word: displayWordForPlayer
+        };
+    });
+    // Hide all other sections to prevent overlap
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("nameEntry").classList.add("hidden");
+    document.getElementById("gameStart").classList.add("hidden");
+    document.getElementById("votingPhase").classList.add("hidden");
+    document.getElementById("results").classList.add("hidden");
+    // Hide the discussion announcement at the start of reveal phase
+    document.getElementById("discussionAnnouncement").textContent = "";
+    // Show reveal and discussion phase
+    document.getElementById("revealPhase").classList.remove("hidden");
+    document.getElementById("discussionPhase").classList.remove("hidden");
+    renderRevealButtons();
+}
+
+// --- Player Reveal Buttons ---
+// This function needs to be defined to create the buttons that call 'revealWord'
+function renderRevealButtons() {
+    const playerButtonsDiv = document.getElementById("playerButtons");
+    playerButtonsDiv.innerHTML = "";
+    players.forEach(playerName => {
+        const button = document.createElement('button');
+        button.textContent = playerName;
+        button.id = `revealBtn-${playerName}`;
+        button.onclick = () => revealWord(button, playerName);
+        button.className = "player-button";
+        playerButtonsDiv.appendChild(button);
+    });
+}
+
+
+// Shows the word to a player (Imposter or Keyword)
+function revealWord(button, name) {
+    if (button.classList.contains("clicked")) return;
+    button.classList.add("clicked");
+    button.disabled = true;
+    const messageDiv = document.getElementById("wordMessage");
+    const playerInfo = revealed[name];
+    if (playerInfo.role === 'Civilian') {
+        messageDiv.textContent = `Your word is \"${playerInfo.word}\"`;
+    } else {
+        messageDiv.textContent = `You are an imposter.`;
     }
+    messageDiv.classList.remove("hidden");
+    // Hide the discussion announcement during reveal phase
+    document.getElementById("discussionAnnouncement").textContent = "";
+    setTimeout(() => {
+        messageDiv.classList.add("hidden");
+        const allButtons = document.querySelectorAll("#playerButtons button");
+        const allRevealed = Array.from(allButtons).every(btn => btn.disabled);
+        if (allRevealed) {
+            document.getElementById("revealPhase").classList.add("hidden");
+            setTimeout(() => {
+                // Show the discussion announcement after all have revealed and cooldown
+                const discussionStarter = players[0];
+                if (publicCategory) {
+                    document.getElementById("discussionAnnouncement").textContent = `The category of the word is ${publicCategory}. ${discussionStarter}, start the discussion.`;
+                } else {
+                    document.getElementById("discussionAnnouncement").textContent = `${discussionStarter}, start the discussion.`;
+                }
+                document.getElementById("discussionPhase").classList.remove("hidden");
+            }, 500);
+        }
+    }, 5000);
+}
+
+// ... (rest of your functions like startVoting, resetVotes, finishVoting, checkWinCondition, prepareNextRound, resetGame)
+// No changes needed in those for this specific request.
 
     // --- Voting Phase ---
     function startVoting() {
@@ -182,55 +256,61 @@ const keywords = ["Ocean", "Tiger", "Banana", "Doctor", "Rocket", "Library", "Mo
     function finishVoting() {
       let maxVotes = 0;
       let playersWithMaxVotes = [];
-
-      // Determine who has the maximum votes, excluding "Skip"
       for (const name in votes) {
         if (name !== "Skip") {
           if (votes[name] > maxVotes) {
             maxVotes = votes[name];
-            playersWithMaxVotes = [name]; // New highest vote, reset list
+            playersWithMaxVotes = [name];
           } else if (votes[name] === maxVotes && maxVotes > 0) {
-            playersWithMaxVotes.push(name); // Tie, add to list
+            playersWithMaxVotes.push(name);
           }
         }
       }
-
       const skipVotes = votes["Skip"] || 0;
       let result = "";
       let votedOut = null;
-
-      // Logic for determining the outcome of the vote
       if (playersWithMaxVotes.length === 0 || skipVotes >= maxVotes) {
-        // No one was voted out (everyone got 0, or skip votes are dominant/equal)
-        result = "No one was kicked out. Voting skipped or tied.";
+        result = "No one was kicked out.";
+        // Image: Safe image (No one was kicked out)
+        document.getElementById("endImage").src = "PATH_TO_SAFE_IMAGE"; // Display line: No one was kicked out.
+        document.getElementById("endImage").classList.remove("hidden");
       } else if (playersWithMaxVotes.length > 1) {
-        // A tie between multiple players with the highest votes
-        result = "Voting resulted in a tie. No one was kicked out.";
+        result = "Voting tied. No one was kicked out.";
+        // Image: Tie image (Voting tied)
+        document.getElementById("endImage").src = "PATH_TO_TIE_IMAGE"; // Display line: Voting tied. No one was kicked out.
+        document.getElementById("endImage").classList.remove("hidden");
       } else {
-        // A single player has the most votes
         votedOut = playersWithMaxVotes[0];
-        result = `${votedOut} was voted out.`;
-
-        // Check if the voted-out player was an imposter
-        if (imposters.has(votedOut)) {
-          result += showImposterWhenKicked ? " They were an imposter." : "";
-          imposters.delete(votedOut); // Remove imposter
+        result = `${votedOut} was kicked out.`;
+        if (showImposterWhenKicked) {
+            if (imposters.has(votedOut)) {
+                result += " They were an imposter.";
+                imposters.delete(votedOut);
+                // Image: Imposter caught image
+                document.getElementById("endImage").src = "PATH_TO_IMPOSTER_CAUGHT_IMAGE"; // Display line: [Name] was kicked out. They were an imposter.
+                document.getElementById("endImage").classList.remove("hidden");
+            } else {
+                result += " They were not an imposter.";
+                // Image: Wrong guess image
+                document.getElementById("endImage").src = "PATH_TO_WRONG_GUESS_IMAGE"; // Display line: [Name] was kicked out. They were not an imposter.
+                document.getElementById("endImage").classList.remove("hidden");
+            }
         } else {
-          result += showImposterWhenKicked ? " They were not an imposter." : "";
+            if (imposters.has(votedOut)) {
+                imposters.delete(votedOut);
+            }
+            // Image: Neutral image (role not revealed)
+            document.getElementById("endImage").src = "PATH_TO_NEUTRAL_IMAGE"; // Display line: [Name] was kicked out.
+            document.getElementById("endImage").classList.remove("hidden");
         }
-        // Remove the voted-out player from the active players list, regardless of role
         players = players.filter(p => p !== votedOut);
       }
-
-      // Display results
       document.getElementById("resultText").textContent = result;
       document.getElementById("votingPhase").classList.add("hidden");
       document.getElementById("results").classList.remove("hidden");
-
-      // Check win condition immediately after vote outcome
       if (!checkWinCondition()) {
-        document.getElementById("nextRoundButton").classList.remove("hidden"); // Only show next round if game continues
-        document.getElementById("roundCounter").textContent = ++round; // Increment round only if game continues
+        document.getElementById("nextRoundButton").classList.remove("hidden");
+        document.getElementById("roundCounter").textContent = ++round;
       }
     }
 
@@ -239,26 +319,27 @@ const keywords = ["Ocean", "Tiger", "Banana", "Doctor", "Rocket", "Library", "Mo
       const nextRoundButton = document.getElementById("nextRoundButton");
       const playAgainButton = document.getElementById("playAgainButton");
       const endImage = document.getElementById("endImage");
-
       // Civilians win if all imposters are caught
       if (imposters.size === 0) {
-        document.getElementById("resultText").textContent += "\nAll imposters are caught! Civilians win!";
+        document.getElementById("resultText").textContent += "\nCivilians win!";
         nextRoundButton.classList.add("hidden");
-        playAgainButton.classList.remove("hidden"); // Show play again
+        playAgainButton.classList.remove("hidden");
+        // Image: Winner image (Civilians win!)
+        endImage.src = "PATH_TO_WINNER_IMAGE"; // Display line: Civilians win!
+        endImage.classList.remove("hidden");
         return true;
       }
       // Imposters win if they outnumber or equal the civilians
-      // players.length = total active players; imposters.size = active imposters
-      // players.length - imposters.size = active civilians
       if (imposters.size >= (players.length - imposters.size)) {
-        document.getElementById("resultText").textContent += "\nImposters have taken over! Imposters win!";
-        endImage.src = "C:/chameleon/7918bd309f6324716188106c6445a5ea.jpg"; // Placeholder image for imposter win
+        document.getElementById("resultText").textContent += "\nImposters win!";
+        // Image: Loser image (Imposters win!)
+        endImage.src = "PATH_TO_LOSER_IMAGE"; // Display line: Imposters win!
         endImage.classList.remove("hidden");
         nextRoundButton.classList.add("hidden");
-        playAgainButton.classList.remove("hidden"); // Show play again
+        playAgainButton.classList.remove("hidden");
         return true;
       }
-      return false; // No win condition met yet
+      return false;
     }
 
     // --- Round Management ---
@@ -311,3 +392,6 @@ const keywords = ["Ocean", "Tiger", "Banana", "Doctor", "Rocket", "Library", "Mo
       document.getElementById("playAgainButton").classList.add("hidden");
       document.getElementById("roundCounter").textContent = "1";
     }
+
+window.startNameEntry = startNameEntry;
+window.startGame = startGame;
