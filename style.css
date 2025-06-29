@@ -1,0 +1,88 @@
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h3, p {
+      text-align: center;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 15px;
+    }
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #357abd;
+    }
+    .hidden {
+      display: none;
+    }
+    .player-button, .vote-button {
+      display: inline-block;
+      margin: 8px;
+      padding: 10px 16px;
+      background-color: #e1ecf4;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      min-width: 100px;
+    }
+    .player-button.clicked {
+      background-color: #ccc;
+      pointer-events: none;
+    }
+    #endImage {
+      width: 100%;
+      max-width: 300px;
+      margin: 20px auto;
+      display: block;
+    }
+    #wordMessage { /* New style for word reveal message */
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      font-size: 24px;
+      z-index: 1000;
+      text-align: center;
+    }
+    @media (max-width: 600px) {
+      .player-button, .vote-button {
+        width: 100%;
+        margin: 8px 0;
+      }
+    }
