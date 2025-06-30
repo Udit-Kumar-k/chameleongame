@@ -37,6 +37,9 @@ function startNameEntry() {
     }
 
     showImposterWhenKicked = document.getElementById("showImposter").checked;
+    // Hide how-to-play note
+    const howToPlayNote = document.getElementById("howToPlayNote");
+    if (howToPlayNote) howToPlayNote.style.display = "none";
 
     // --- Start: Keyword generation/input logic (already present, but needs to determine publicCategory) ---
     let tempSelectedKeyword = ""; // Use a temporary variable for keyword determination
@@ -194,7 +197,8 @@ function revealWord(button, name) {
             setTimeout(() => {
                 // Show the discussion announcement after all have revealed and cooldown
                 const discussionStarter = players[0];
-                if (publicCategory) {
+                const showCategory = document.getElementById("showCategory").checked;
+                if (publicCategory && showCategory) {
                     document.getElementById("discussionAnnouncement").textContent = `The category of the word is ${publicCategory}. ${discussionStarter}, start the discussion.`;
                 } else {
                     document.getElementById("discussionAnnouncement").textContent = `${discussionStarter}, start the discussion.`;

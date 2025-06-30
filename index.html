@@ -6,7 +6,7 @@
   <title>Chameleon Game</title>
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
-  <script src="words.js"></script>
+  <script src="words1.js"></script>
 </head>
 <body>
   <div class="section" id="setup">
@@ -14,6 +14,7 @@
     <label>Number of imposters: <input type="number" id="numImposters" min="1"></label>
     <label><input type="checkbox" id="randomWord"> Generate random keyword</label>
     <label><input type="checkbox" id="showImposter"> Show imposter if kicked out</label>
+    <label><input type="checkbox" id="showCategory"> Show category before discussion</label>
     <label>Custom Keyword(s) (comma-seperated)
       <input type="text" id="keywordInput" placeholder="e.g., Apple, Banana, Orange">
     </label>
@@ -56,5 +57,17 @@
   </div>
 
   <div id="wordMessage" class="hidden"></div>
+
+  <div class="how-to-play-note" id="howToPlayNote">
+    <h4>How to Play</h4>
+    <ul>
+      <li>Enter the number of players and imposters, and choose a keyword (or generate one).</li>
+      <li>Each player taps their name to see their word (or if they are the imposter).</li>
+      <li>After all have seen their word, the first player starts a discussion to find the imposter(s).</li>
+      <li>Players vote to kick out who they think is the imposter. If all imposters are caught, civilians win. If imposters equal or outnumber civilians, imposters win.</li>
+      <li>Use the checkboxes for extra options, like showing the category or revealing imposters when kicked.</li>
+    </ul>
+    <p><b>Note:</b> The imposter does not know the keyword and must blend in!</p>
+  </div>
 </body>
 </html>
