@@ -399,6 +399,7 @@ function revealWord(button, name) {
       document.getElementById("nextRoundButton").classList.add("hidden");
       document.getElementById("playAgainButton").classList.add("hidden");
       document.getElementById("roundCounter").textContent = "1";
+      document.getElementById("discussionAnnouncement").textContent = "";
     }
 
 window.startNameEntry = startNameEntry;

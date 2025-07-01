@@ -34,7 +34,10 @@
 
   <div id="discussionPhase" class="hidden">
     <p id="discussionAnnouncement"></p>
-    <button onclick="startVoting()">Start Voting</button> </div>
+    <div class="action-buttons">
+      <button onclick="startVoting()">Start Voting</button>
+    </div>
+  </div>
 
   <div class="section hidden" id="gameStart">
     <p id="starterText"></p>
@@ -52,8 +55,10 @@
     <p id="resultText"></p>
     <img id="endImage" class="hidden" src="" alt="Game Result">
     <h3>Round: <span id="roundCounter">1</span></h3>
-    <button id="nextRoundButton" class="hidden" onclick="prepareNextRound()">Next Round</button>
-    <button id="playAgainButton" class="hidden" onclick="resetGame()">Play Again</button>
+    <div class="action-buttons">
+      <button id="nextRoundButton" class="hidden" onclick="prepareNextRound()">Next Round</button>
+      <button id="playAgainButton" class="hidden" onclick="resetGame()">Play Again</button>
+    </div>
   </div>
 
   <div id="wordMessage" class="hidden"></div>
